@@ -2,7 +2,7 @@
 Projet réalisé dans le cadre de la SAE Modélisation statistique pour les données complexes et le Big Data — Université Lumière Lyon 2.
 
 
-Objectif du projet
+# Objectif du projet
 
 L’objectif est de développer une interface capable de :
 
@@ -14,11 +14,11 @@ un tableau de résultats,
 des statistiques descriptives,
 des visualisations graphiques.
 
-Exemple de question :
+## Exemple de question :
 
 "Afficher l’évolution des vols en Auvergne-Rhône-Alpes entre 2020 et 2023"
 
-Technologies utilisées
+# Technologies utilisées
 Python
 Pandas
 SQLite
@@ -27,7 +27,7 @@ TinyLlama / Phi-2
 Matplotlib
 Gradio
 Google Colab
-Architecture du projet
+# Architecture du projet
 Question utilisateur
         ↓
 LLM local (Hugging Face)
@@ -41,7 +41,7 @@ Résultats pandas
 Statistiques + graphiques
         ↓
 Interface Gradio
-Structure du projet
+# Structure du projet
 sql-natural-language-interface/
 │
 ├── data/
@@ -60,7 +60,7 @@ sql-natural-language-interface/
 ├── requirements.txt
 ├── README.md
 └── .gitignore
-Fonctionnalités
+# Fonctionnalités
 Chargement des données CSV
 Création automatique d’une base SQLite
 Génération de requêtes SQL à partir du langage naturel
@@ -68,58 +68,58 @@ Exécution des requêtes
 Affichage des résultats
 Génération de graphiques
 Interface utilisateur avec Gradio
-Modèles testés
+# Modèles testés
 
 Le projet compare plusieurs LLMs locaux :
 
 TinyLlama
 Phi-2
-Expérimentations de prompting
+# Expérimentations de prompting
 
 Trois stratégies de prompting sont étudiées :
 
 Zero-shot
 One-shot
 Few-shot
-Installation
-Cloner le dépôt
+# Installation
+## Cloner le dépôt
 git clone https://github.com/votre-utilisateur/sql-natural-language-interface.git
 cd sql-natural-language-interface
-Installer les dépendances
+## Installer les dépendances
 pip install -r requirements.txt
-Lancer le projet
+## Lancer le projet
 python src/app.py
 
 Ou ouvrir le notebook :
 
 notebooks/SAE_SQLLM.ipynb
-Exemple d’utilisation
+# Exemple d’utilisation
 
-Question :
+## Question :
 
 Quel est le nombre de cambriolages à Lyon en 2022 ?
 
-SQL généré :
+## SQL généré :
 
 SELECT *
 FROM crime
 WHERE ville='Lyon'
 AND annee=2022
 AND type='Cambriolage'
-Résultats attendus
+# Résultats attendus
 
 L’interface affiche :
 
 les données sélectionnées,
 les statistiques descriptives,
 les graphiques associés.
-Limites du projet
+# Limites du projet
 Compréhension limitée du langage naturel
 SQL parfois incorrect selon le prompt utilisé
 Performance dépendante du LLM choisi
-Auteurs
+# Auteurs
 Muriel Rita ZOUZZOU
 [Nom des membres du groupe]
-Université
+# Université
 
 Université Lumière Lyon 2 — 2026
