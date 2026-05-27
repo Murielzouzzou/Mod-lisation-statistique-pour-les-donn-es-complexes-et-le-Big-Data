@@ -1,0 +1,532 @@
+# Avancement du projet et améliorations restantes
+
+## Avancement du projet
+
+Jusqu’à présent, nous avons construit progressivement une mini application d’IA capable de comprendre des questions en français sur des données de délinquance et d’y répondre automatiquement grâce à SQL et un LLM local.
+
+### 1. Installation des bibliothèques
+
+Nous avons commencé par installer les outils nécessaires au projet :
+
+```python
+!pip install transformers accelerate gradio
+```
+
+#### Rôle des bibliothèques
+
+| Librairie | Utilité |
+|---|---|
+| transformers | utiliser les modèles de langage (LLM) |
+| accelerate | optimiser l’exécution des modèles |
+| gradio | créer l’interface utilisateur |
+
+---
+
+### 2. Importation des librairies
+
+Nous avons importé les principales bibliothèques Python :
+
+```python
+import pandas as pd
+import sqlite3
+import matplotlib.pyplot as plt
+import gradio as gr
+```
+
+#### Utilité
+
+| Librairie | Rôle |
+|---|---|
+| pandas | manipulation des données |
+| sqlite3 | création de la base SQL |
+| matplotlib | génération de graphiques |
+| gradio | interface web |
+
+---
+
+### 3. Chargement du fichier CSV
+
+Nous avons chargé le jeu de données :
+
+```python
+df = pd.read_csv("données.csv", sep=";")
+```
+
+#### Pourquoi `sep=";"` ?
+
+Le fichier CSV utilisait le point-virgule `;` comme séparateur au lieu de la virgule `,`.
+
+---
+
+### 4. Exploration des données
+
+Nous avons analysé le dataset avec :
+
+```python
+df.head()
+df.columns
+df.info()
+```
+
+#### Objectif
+
+Comprendre :
+
+- les colonnes disponibles,
+- les types de données,
+- la structure du jeu de données.
+
+---
+
+### 5. Analyse des valeurs importantes
+
+Nous avons observé les différentes catégories de délits :
+
+```python
+df["indicateur"].unique()
+```
+
+#### Exemples de valeurs trouvées
+
+- Homicides
+- Violences sexuelles
+- Vols de véhicule
+- Cambriolages de logement
+- etc.
+
+---
+
+### 6. Création de la base SQLite
+
+Nous avons créé une base de données SQLite :
+
+```python
+conn = sqlite3.connect("crime.db")
+```
+
+Puis nous avons transformé le DataFrame en table SQL :
+
+```python
+df.to_sql(
+    "crime",
+    conn,
+    if_exists="replace",
+    index=False
+)
+```
+
+#### Objectif
+
+Transformer :
+
+```text
+CSV → table SQL
+```
+
+afin de pouvoir utiliser des requêtes SQL.
+
+---
+
+### 7. Premières requêtes SQL
+
+Nous avons testé SQLite avec :
+
+```sql
+SELECT *
+FROM crime
+LIMIT 5
+```
+
+#### Objectif
+
+Vérifier que la base fonctionne correctement.
+
+---
+
+### 8. Création de statistiques descriptives
+
+Nous avons réalisé des requêtes SQL plus avancées :
+
+```sql
+SELECT indicateur,
+       SUM(nombre) as total
+FROM crime
+GROUP BY indicateur
+```
+
+#### Objectif
+
+Calculer des statistiques descriptives sur les données.
+
+---
+
+### 9. Création de graphiques
+
+Nous avons généré des visualisations avec matplotlib :
+
+```python
+result.plot(kind="bar")
+```
+
+#### Résultat
+
+Un graphique automatique à partir des résultats SQL.
+
+---
+
+### 10. Chargement du LLM local
+
+Nous avons chargé TinyLlama depuis Hugging Face :
+
+```python
+pipe = pipeline(
+    "text-generation",
+    model="TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+)
+```
+
+#### Objectif
+
+Permettre au système de comprendre des questions en langage naturel.
+
+---
+
+### 11. Création des prompts
+
+Nous avons conçu des prompts permettant de transformer une question en SQL.
+
+#### Exemple
+
+Question :
+
+```text
+Nombre total d'Homicides en 2016
+```
+
+SQL attendu :
+
+```sql
+SELECT SUM(nombre)
+FROM crime
+WHERE indicateur = 'Homicides'
+AND annee = 2016;
+```
+
+---
+
+### 12. One-shot prompting
+
+Nous avons ajouté un exemple dans le prompt afin d’améliorer la qualité des réponses du modèle.
+
+#### Objectif
+
+Réduire les hallucinations et améliorer la structure SQL générée.
+
+---
+
+### 13. Nettoyage du SQL généré
+
+Le modèle ajoutait parfois du texte inutile.
+
+Nous avons donc nettoyé la sortie :
+
+```python
+generated_sql = generated_sql.split(";")[0] + ";"
+```
+
+#### Objectif
+
+Conserver uniquement la requête SQL.
+
+---
+
+### 14. Exécution automatique du SQL
+
+Nous avons relié automatiquement :
+
+```text
+Question utilisateur
+↓
+LLM
+↓
+SQL généré
+↓
+SQLite
+↓
+Résultat
+```
+
+#### Exemple réel
+
+Question :
+
+```text
+Nombre total de vols de véhicule en 2022
+```
+
+SQL généré :
+
+```sql
+SELECT SUM(nombre)
+FROM crime
+WHERE indicateur = 'Vols de véhicule'
+AND annee = 2022;
+```
+
+Résultat :
+
+```text
+133136
+```
+
+---
+
+### 15. Gestion des erreurs
+
+Nous avons ajouté un bloc `try/except` afin d’éviter que l’application plante lorsque le LLM génère un SQL incorrect.
+
+---
+
+### 16. Création de la fonction `ask_question()`
+
+Nous avons automatisé tout le pipeline dans une seule fonction :
+
+```text
+Question
+↓
+Prompt
+↓
+TinyLlama
+↓
+SQL
+↓
+SQLite
+↓
+Résultat
+↓
+Graphique
+```
+
+---
+
+### 17. Création de l’interface Gradio
+
+Nous avons développé une interface utilisateur web avec Gradio :
+
+```python
+interface = gr.Interface(
+    fn=ask_question,
+    inputs="text",
+    outputs="dataframe"
+)
+```
+
+---
+
+### 18. Lancement de l’application
+
+Nous avons lancé l’application avec :
+
+```python
+interface.launch()
+```
+
+---
+
+## Résultat actuel
+
+Nous avons désormais :
+
+- une interface web interactive,
+- un LLM local,
+- une génération automatique de SQL,
+- une base SQLite,
+- des statistiques descriptives,
+- des graphiques automatiques.
+
+---
+
+# Améliorations et travail restant
+
+## 1. Tester plusieurs modèles de langage
+
+Le sujet demande de comparer au moins deux familles de LLMs.
+
+Actuellement, nous avons principalement utilisé :
+
+- TinyLlama
+
+Nous devons encore tester un second modèle, par exemple :
+
+- Phi-2
+- Gemma
+- Mistral (version légère)
+
+### Objectif de la comparaison
+
+Comparer :
+
+| Critère | Observation |
+|---|---|
+| qualité du SQL généré | précision des requêtes |
+| vitesse d’exécution | temps de réponse |
+| hallucinations | colonnes ou valeurs inventées |
+| stabilité | capacité à respecter le prompt |
+
+---
+
+## 2. Comparaison des techniques de prompting
+
+Le sujet demande également d’expérimenter plusieurs méthodes de prompting :
+
+| Type | Description |
+|---|---|
+| Zero-shot | aucun exemple fourni |
+| One-shot | un exemple fourni |
+| Few-shot | plusieurs exemples fournis |
+
+### Ce que nous avons déjà fait
+
+- début du zero-shot
+- implémentation du one-shot prompting
+
+### Ce qu’il reste à faire
+
+- implémenter un vrai few-shot prompting
+- comparer les performances des trois approches
+- analyser laquelle produit le SQL le plus fiable
+
+---
+
+## 3. Amélioration de la robustesse du système
+
+Le modèle génère parfois :
+
+- du texte parasite,
+- des requêtes incomplètes,
+- des valeurs incorrectes,
+- des colonnes inexistantes.
+
+Nous avons commencé à gérer ces erreurs avec :
+
+```python
+try:
+    ...
+except:
+    ...
+```
+
+### Améliorations possibles
+
+- validation automatique du SQL généré,
+- vérification des colonnes utilisées,
+- contrôle des valeurs possibles,
+- nettoyage plus avancé des réponses du modèle.
+
+---
+
+## 4. Amélioration de l’interface Gradio
+
+L’interface fonctionne actuellement mais peut être enrichie.
+
+### Améliorations possibles
+
+- affichage automatique du SQL généré,
+- affichage des graphiques directement dans Gradio,
+- ajout d’un historique des questions,
+- amélioration du design,
+- ajout d’exemples prédéfinis.
+
+---
+
+## 5. Gestion de questions plus complexes
+
+Pour le moment, le système fonctionne surtout avec :
+
+- des questions simples,
+- des statistiques descriptives,
+- une seule condition principale.
+
+### Exemples déjà bien gérés
+
+```text
+Nombre total d'Homicides en 2016
+```
+
+```text
+Nombre total de vols de véhicule en 2022
+```
+
+### Améliorations possibles
+
+Gérer :
+
+- plusieurs conditions,
+- comparaisons entre années,
+- regroupements par région,
+- évolution temporelle.
+
+Exemple :
+
+```text
+Comparer les homicides entre 2018 et 2022
+```
+
+---
+
+## 6. Nettoyage et organisation du notebook
+
+Le notebook devra être rendu plus propre avant la soutenance.
+
+### À ajouter
+
+- titres et sous-sections Markdown,
+- commentaires dans le code,
+- explications des étapes,
+- conclusions intermédiaires,
+- analyse des résultats obtenus.
+
+---
+
+## 7. Préparation de la soutenance
+
+Pendant la soutenance, nous devrons montrer :
+
+- le chargement des données,
+- la création de la base SQLite,
+- le fonctionnement du LLM,
+- la génération automatique du SQL,
+- les résultats obtenus,
+- les limites du système.
+
+---
+
+## 8. Limites actuelles du projet
+
+Le système présente encore plusieurs limites :
+
+- compréhension imparfaite du langage naturel,
+- hallucinations du LLM,
+- dépendance forte au prompt,
+- difficulté avec certaines formulations complexes,
+- résultats parfois incorrects si les valeurs exactes du dataset ne sont pas respectées.
+
+---
+
+## Conclusion provisoire
+
+Nous avons développé une première version fonctionnelle d’un système capable :
+
+- d’interpréter des questions en français,
+- de générer automatiquement des requêtes SQL,
+- d’interroger une base SQLite,
+- de produire des statistiques descriptives,
+- d’afficher des résultats et des visualisations graphiques via une interface web Gradio.
+
+Les principales améliorations restantes concernent :
+
+- la robustesse,
+- la comparaison des modèles,
+- l’analyse des prompts,
+- l’amélioration de l’interface utilisateur,
+- et la gestion de requêtes plus complexes.
